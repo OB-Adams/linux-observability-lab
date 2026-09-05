@@ -1,0 +1,23 @@
+# Grafana
+grafana/data/
+
+# Prometheus data
+prometheus/data/
+
+# Loki data
+loki/data/
+
+# Promtail positions
+promtail/positions/
+
+# Environment variables / secrets
+.env
+*.env
+
+# Logs
+*.log
+
+# OS/editor files
+.DS_Store
+*.swp
+*~
