@@ -5,12 +5,18 @@ scrape_configs:
   - job_name: "prometheus"
     static_configs:
       - targets: ["prometheus:9090"]
-  - job_name: "node"
+  - job_name: "observability"
     static_configs:
       - targets: ["node-exporter:9100"]
+        labels:
+          host: "observability"
   - job_name: "ubuntu-server"
     static_configs:
       - targets: ["192.168.0.20:9100"]
+        labels:
+          host: "ubuntu-server"
   - job_name: "rocky-server"
     static_configs: 
       - targets: ["192.168.0.10:9100"]
+        labels:
+          host: "rocky-linux" 
