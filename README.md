@@ -56,8 +56,14 @@ observability/
 │   └── alerts.yml
 ├── loki/
 │   └── loki-config.yml
-└── promtail/
-    └── promtail-config.yml
+├── promtail/
+│   └── promtail-config.yml
+└── docs/
+    └── screenshots/
+        ├── centralised-dashboard.png
+        ├── observability-server-logs.png
+        ├── prometheus-hosts.png
+        └── ubuntu-server-logs.png
 ```
 
 ## Metrics
@@ -76,6 +82,32 @@ Prometheus collects infrastructure metrics including:
 Promtail collects system logs from the Linux hosts and forwards them to the central Loki server.
 
 Logs can be queried and visualized through Grafana using LogQL.
+
+## Screenshots
+
+### Grafana Infrastructure Dashboard
+
+Overview of infrastructure metrics collected from the monitored Linux hosts.
+
+![Grafana Infrastructure Dashboard](docs/screenshots/centralised-dashboard.png)
+
+### Observability Server Logs
+
+Logs collected from the observability server and visualized through Grafana and Loki.
+
+![Observability Server Logs](docs/screenshots/observability-server-logs.png)
+
+### Prometheus Monitored Hosts
+
+Prometheus showing the monitored Linux hosts and their scrape status.
+
+![Prometheus Hosts](docs/screenshots/prometheus-hosts.png)
+
+### Ubuntu Server Logs
+
+Centralized Ubuntu Server logs collected through Promtail and Loki.
+
+![Ubuntu Server Logs](docs/screenshots/ubuntu-server-logs.png)
 
 ## Running the Stack
 
