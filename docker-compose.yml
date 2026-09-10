@@ -9,6 +9,7 @@ services:
 
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus-data:/prometheus
 
     command:
@@ -80,10 +81,29 @@ services:
     depends_on: 
       - loki
 
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    restart: unless-stopped
+
+    ports:
+      - "9093:9093"
+
+    environment:
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+
 volumes:
   prometheus-data:
   grafana-data:
   loki-data:
+  alertmanager-data:
 
 
 

@@ -1,0 +1,39 @@
+groups:
+  - name: linux-infrastructure
+    rules:
+
+      - alert: InstanceDown
+        expr: up{job=~"observability|ubuntu-server|rocky-server"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host {{ $labels.host }} is down"
+          description: "{{ $labels.instance }} has been unreachable for more than 1 minute."
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (host) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.host }}"
+          description: "CPU usage has been above 80% for more than 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.host }}"
+          description: "Memory usage has been above 85% for more than 5 minutes."
+
+      - alert: HighDiskUsage
+        expr: 100 * (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay",mountpoint="/"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay",mountpoint="/"})) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage on {{ $labels.host }}"
+          description: "Root filesystem usage has been above 85% for more than 5 minutes."
