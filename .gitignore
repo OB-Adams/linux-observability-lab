@@ -21,3 +21,5 @@ promtail/positions/
 .DS_Store
 *.swp
 *~
+.bashrc
+alertmanager/alertmanager.yml
