@@ -1,44 +1,113 @@
 # Linux Observability Lab
 
-A multi-host Linux observability lab built with Prometheus, Grafana, Loki, Promtail, and Alertmanager.
+A multi-node Linux observability lab built to monitor Linux infrastructure metrics, centralize system logs, visualize system health, and deliver infrastructure alerts.
 
-The project monitors Linux infrastructure metrics, centralizes system logs, visualizes infrastructure health, and sends alerts to Discord when monitored systems experience issues.
+The project started with an Ubuntu Server and Rocky Linux server being monitored by an Ubuntu Desktop machine acting as the central observability platform. It was later expanded with a CentOS server to create a three-node monitoring environment.
+
+The logging pipeline was also migrated from Promtail to Grafana Alloy, with Alloy running natively as a systemd-managed service on the monitored Linux systems.
+
+Ansible was subsequently introduced to automate the configuration and management of Node Exporter and Grafana Alloy across the monitoring nodes.
 
 ## Architecture
 
 ```text
-                         ┌──────────────┐
-                         │   Grafana    │
-                         │    :3000     │
-                         └──────┬───────┘
-                                │
-                 ┌──────────────┴──────────────┐
-                 │                             │
-                 ▼                             ▼
-          ┌─────────────┐                ┌─────────────┐
-          │ Prometheus  │                │    Loki     │
-          │    :9090    │                │    :3100    │
-          └──────┬──────┘                └──────┬──────┘
-                 │                              │
-          Metrics│                              │Logs
-                 │                              │
-       ┌─────────┼─────────┐          ┌─────────┼─────────┐
-       ▼         ▼         ▼          ▼         ▼         ▼
-    Ubuntu    Ubuntu      Rocky    Ubuntu    Ubuntu     Rocky
-    Desktop   Server      Linux    Server    Desktop    Linux
-   Node Exp.  Node Exp.  Node Exp. Promtail  Promtail   Promtail
-       │
-       ▼
- ┌──────────────┐
- │ Alertmanager │
- │    :9093     │
- └──────┬───────┘
-        │
-        ▼
-     Discord
+                         Ubuntu Desktop
+                     Observability Server
+                  ┌─────────────────────────┐
+                  │                         │
+                  │      Prometheus         │
+                  │        :9090            │
+                  │                         │
+                  │        Grafana          │
+                  │        :3000            │
+                  │                         │
+                  │         Loki            │
+                  │        :3100            │
+                  │                         │
+                  │      Alertmanager       │
+                  │        :9093            │
+                  │                         │
+                  │    Alloy (Docker)       │
+                  │                         │
+                  └────────────┬────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+              │                │                │
+              ▼                ▼                ▼
+       Rocky Server      Ubuntu Server      CentOS Server
+       192.168.0.10      192.168.0.20       192.168.0.40
+              │                │                │
+              │                │                │
+        Node Exporter    Node Exporter    Node Exporter
+           :9100            :9100            :9100
+              │                │                │
+           Alloy            Alloy            Alloy
+          systemd           systemd           systemd
+              │                │                │
+              └────────────────┼────────────────┘
+                               │
+                         Journald Logs
+                               │
+                               ▼
+                              Loki
+                               │
+                               ▼
+                            Grafana
+
+                         Alerting Flow
+                         
+        Node Exporter
+              │
+              ▼
+          Prometheus
+              │
+         Alert Rules
+              │
+              ▼
+         Alertmanager
+              │
+              ▼
+           Discord
 ```
 
-## Stack
+## Project Evolution
+
+### Initial Implementation
+
+The original lab consisted of:
+
+- Ubuntu Desktop as the observability server
+- Ubuntu Server as a monitored node
+- Rocky Linux as a monitored node
+- Prometheus for metrics collection
+- Node Exporter for Linux host metrics
+- Grafana for visualization
+- Loki for centralized logging
+- Promtail for log collection
+- Alertmanager for alert routing
+- Discord for alert notifications
+
+This provided the foundation for learning Linux monitoring, centralized logging, dashboards, and infrastructure alerting.
+
+### Expansion to Three Monitoring Nodes
+
+The lab was expanded with a CentOS server.
+
+The current monitored infrastructure consists of:
+
+| Host | Role | Metrics | Logs |
+|---|---|---|---|
+| Ubuntu Desktop | Observability server | Node Exporter | Alloy |
+| Ubuntu Server | Monitoring node | Node Exporter | Alloy |
+| Rocky Linux | Monitoring node | Node Exporter | Alloy |
+| CentOS | Monitoring node | Node Exporter | Alloy |
+
+The Ubuntu Desktop observability server hosts the central monitoring stack.
+
+The Ubuntu, Rocky, and CentOS systems act as monitored Linux nodes.
+
+## Technology Stack
 
 | Component | Purpose |
 |---|---|
@@ -46,104 +115,129 @@ The project monitors Linux infrastructure metrics, centralizes system logs, visu
 | Node Exporter | Linux host metrics |
 | Grafana | Metrics and log visualization |
 | Loki | Centralized log storage |
-| Promtail | Log collection and forwarding to Loki |
+| Grafana Alloy | System journal collection and forwarding |
 | Alertmanager | Alert routing and notification management |
 | Discord | External alert notifications |
-| Docker Compose | Container orchestration |
-
-## Monitored Hosts
-
-- Ubuntu Desktop - Observability server
-- Ubuntu Server - Monitored Linux server
-- Rocky Linux - Monitored Linux server
-
-## Project Structure
-
-```text
-observability/
-├── docker-compose.yml
-├── .gitignore
-├── prometheus/
-│   ├── prometheus.yml
-│   └── alerts.yml
-├── alertmanager/
-│   └── alertmanager.yml.template
-├── loki/
-│   └── loki-config.yml
-├── promtail/
-│   └── promtail-config.yml
-└── docs/
-    └── screenshots/
-        ├── centralised dashboard.png
-        ├── observability-server-logs.png
-        ├── prometheus-hosts.png
-        ├── ubuntu-server-logs.png
-        ├── alertmanger-notification.png
-        ├── discord-alertmanager-notification.png
-        ├── prom-cpu-pending.png
-        ├── prom-instance-firing.png
-        └── prom-instance-pending.png
-```
+| Docker Compose | Runs the central observability stack |
+| Ansible | Configuration management and automation |
+| systemd | Service management for Node Exporter and Alloy on monitoring nodes |
 
 ## Metrics Monitoring
 
-Prometheus collects infrastructure metrics from Node Exporter running on the monitored Linux systems.
+Prometheus collects infrastructure metrics from Node Exporter running on the Linux systems.
 
-The infrastructure dashboard provides visibility into:
+The monitored infrastructure provides visibility into:
 
 - CPU utilization
 - Memory utilization
 - Disk utilization
+- Filesystem usage
 - System load
 - Network traffic
 - Host availability
+- Node Exporter health
 
-Prometheus also monitors the health of the configured targets and evaluates infrastructure alert rules.
+Prometheus also evaluates infrastructure alert rules and monitors the availability of configured scrape targets.
+
+The current Prometheus targets include:
+
+```text
+prometheus:9090
+node-exporter:9100
+192.168.0.10:9100
+192.168.0.20:9100
+192.168.0.40:9100
+```
+
+The first two targets represent services running on the observability platform, while the remaining targets represent the Rocky, Ubuntu, and CentOS monitoring nodes.
 
 ## Centralized Logging
 
-Loki provides centralized log storage while Promtail collects logs from the monitored Linux systems.
+The original implementation used Promtail for log collection.
 
-Logs can be queried by host and other labels through Grafana.
+The project was later migrated to Grafana Alloy.
+
+Alloy now runs directly on the three monitored Linux systems as a native systemd-managed service rather than as a Docker container.
+
+Each monitoring node reads persistent systemd journal data from:
+
+```text
+/var/log/journal
+```
+
+and forwards the logs to Loki on the observability server.
+
+The current logging pipeline is:
+
+```text
+Linux systemd journal
+        │
+        ▼
+Grafana Alloy
+        │
+        ▼
+      Loki
+        │
+        ▼
+     Grafana
+```
+
+Each host adds its own hostname as a Loki label, allowing logs to be queried by individual server.
 
 Example LogQL queries:
 
-```text
-{job="varlogs"}
-```
-
-```text
+```logql
 {host="ubuntu-server"}
 ```
 
-```text
-{host="rocky-linux"}
+```logql
+{host="rocky-server"}
 ```
 
-```text
-{host="observability"}
+```logql
+{host="cent-server"}
 ```
 
-Example filtered query:
+Logs can also be filtered for specific messages:
 
-```text
-{job="varlogs"} |= "error"
+```logql
+{job="journal"} |= "error"
 ```
+
+## Grafana Alloy
+
+Grafana Alloy is installed natively on the three monitored Linux systems.
+
+Alloy is managed by systemd:
+
+```bash
+systemctl status alloy
+```
+
+The Alloy service:
+
+- Reads persistent journald logs
+- Adds host-specific labels
+- Forwards logs to Loki
+- Runs continuously as a system service
+- Starts automatically with the system
+
+The monitored nodes therefore do not require Docker to run their logging agent.
+
+The observability server retains its separate Alloy deployment as part of the central observability environment.
 
 ## Alerting
 
 Prometheus evaluates infrastructure alert rules and sends firing alerts to Alertmanager.
 
-Configured alerts include:
+Configured alerts include conditions such as:
 
 - Instance down
-- High CPU usage
-- High memory usage
-- High disk usage
+- High CPU utilization
+- High memory utilization
+- High disk utilization
 
-Alert rules use thresholds and evaluation periods to prevent short-lived spikes from immediately generating alerts.
-
-### Alert Flow
+The alert flow is:
 
 ```text
 Node Exporter
@@ -163,92 +257,189 @@ Discord
 
 Alertmanager handles alert routing and notification delivery.
 
-## Alertmanager Configuration
+The lab has been tested by generating resource pressure on monitored systems and verifying that Prometheus detects the condition, Alertmanager processes the alert, and Discord receives the notification.
 
-Alertmanager uses a configuration template containing the Discord webhook environment variable.
+## Ansible Configuration Management
 
-The Discord webhook is stored in `.env` and excluded from version control.
+Ansible was introduced to automate the configuration of the three monitoring nodes.
 
-The configuration is generated with `envsubst`:
+The Ansible project is located in:
 
-```bash
-envsubst < alertmanager/alertmanager.yml.template > alertmanager/alertmanager.yml
+```text
+ansible/
+├── ansible.cfg
+├── group_vars/
+│   └── monitoring_nodes.yml
+├── inventory/
+│   └── hosts
+└── playbooks/
+    ├── files/
+    │   ├── prometheus-node-exporter.j2
+    │   └── config.alloy.j2
+    ├── alloy.yml
+    └── node_exporter.yml
 ```
 
-The generated `alertmanager.yml` is then mounted into the Alertmanager container.
+The inventory defines the three monitoring nodes:
 
-This keeps the Discord webhook out of the configuration template and Git repository.
+```text
+rocky-server
+ubuntu-server
+cent-server
+```
 
-## Screenshots
+### Node Exporter Automation
 
-### Grafana Infrastructure Dashboard
+Ansible manages the Node Exporter configuration and systemd service.
 
-Overview of infrastructure metrics collected from the monitored Linux hosts.
+The playbook ensures that:
 
-![Grafana Infrastructure Dashboard](docs/screenshots/centralised%20dashboard.png)
+- Node Exporter configuration exists
+- Configuration has the expected ownership and permissions
+- Node Exporter is enabled
+- Node Exporter is running
 
-### Observability Server Logs
+### Alloy Automation
 
-Logs collected from the observability server and visualized through Grafana and Loki.
+Ansible also manages Grafana Alloy on the three monitoring nodes.
 
-![Observability Server Logs](docs/screenshots/observability-server-logs.png)
+The Alloy playbook ensures that:
 
-### Prometheus Monitored Hosts
+- Grafana Alloy is installed
+- The Alloy configuration exists
+- The configuration is generated from an Ansible template
+- Each host receives its own hostname label
+- Alloy is enabled
+- Alloy is running
+- Alloy is restarted when its configuration changes
 
-Prometheus showing the monitored Linux hosts and their scrape status.
+The Alloy playbook was tested for idempotency so that subsequent runs do not unnecessarily modify the systems or restart the service.
 
-![Prometheus Hosts](docs/screenshots/prometheus-hosts.png)
-
-### Ubuntu Server Logs
-
-Centralized Ubuntu Server logs collected through Promtail and Loki.
-
-![Ubuntu Server Logs](docs/screenshots/ubuntu-server-logs.png)
-
-### Prometheus CPU Alert Pending
-
-Prometheus detecting sustained high CPU utilization and placing the alert into the pending state.
-
-![Prometheus CPU Alert Pending](docs/screenshots/prom-cpu-pending.png)
-
-### Prometheus Instance Alert Pending
-
-Prometheus detecting an unavailable monitored instance.
-
-![Prometheus Instance Alert Pending](docs/screenshots/prom-instance-pending.png)
-
-### Prometheus Instance Alert Firing
-
-The instance-down alert transitioning from pending to firing after the configured evaluation period.
-
-![Prometheus Instance Alert Firing](docs/screenshots/prom-instance-firing.png)
-
-### Alertmanager Notification
-
-Alertmanager receiving and displaying the firing infrastructure alert.
-
-![Alertmanager Notification](docs/screenshots/alertmanger-notification.png)
-
-### Discord Alertmanager Notification
-
-Alertmanager delivering the infrastructure alert to Discord.
-
-![Discord Alertmanager Notification](docs/screenshots/discord-alertmanager-notification.png)
-
-## Running the Stack
-
-Clone the repository and start the observability stack with Docker Compose:
+Example:
 
 ```bash
-git clone <repository-url>
-cd observability
+ansible-playbook playbooks/alloy.yml
+```
+
+Check mode can be used before applying changes:
+
+```bash
+ansible-playbook playbooks/alloy.yml --check --diff
+```
+
+Connectivity can be tested with:
+
+```bash
+ansible monitoring_nodes -m ping
+```
+
+Service state can be checked with:
+
+```bash
+ansible monitoring_nodes -a "systemctl is-active alloy"
+```
+
+and:
+
+```bash
+ansible monitoring_nodes -a "systemctl is-enabled alloy"
+```
+
+## Project Structure
+
+```text
+linux-observability-lab/
+├── alertmanager/
+│   └── alertmanager.yml.template
+├── alloy/
+├── ansible/
+│   ├── ansible.cfg
+│   ├── group_vars/
+│   │   └── monitoring_nodes.yml
+│   ├── inventory/
+│   │   └── hosts
+│   └── playbooks/
+│       ├── files/
+│       │   ├── prometheus-node-exporter.j2
+│       │   └── config.alloy.j2
+│       ├── alloy.yml
+│       └── node_exporter.yml
+├── docs/
+│   └── screenshots/
+├── loki/
+│   └── loki-config.yml
+├── prometheus/
+│   ├── prometheus.yml
+│   └── alerts.yml
+├── docker-compose.yml
+└── README.md
+```
+
+## Running the Central Observability Stack
+
+The central observability components run on the Ubuntu Desktop observability server.
+
+Clone the repository:
+
+```bash
+git clone https://github.com/OB-Adams/linux-observability-lab.git
+cd linux-observability-lab
+```
+
+Start the central stack:
+
+```bash
 docker compose up -d
 ```
 
-Check the running containers:
+Check the containers:
 
 ```bash
 docker compose ps
+```
+
+The central stack uses Docker Compose, while the three monitored nodes run their Node Exporter and Alloy services natively through systemd.
+
+## Running the Ansible Automation
+
+From the repository root:
+
+```bash
+cd ansible
+```
+
+Test connectivity:
+
+```bash
+ansible monitoring_nodes -m ping
+```
+
+Manage Node Exporter:
+
+```bash
+ansible-playbook playbooks/node_exporter.yml
+```
+
+Manage Grafana Alloy:
+
+```bash
+ansible-playbook playbooks/alloy.yml
+```
+
+Check the Alloy configuration without making changes:
+
+```bash
+ansible-playbook playbooks/alloy.yml --check --diff
+```
+
+Verify Alloy across the monitoring nodes:
+
+```bash
+ansible monitoring_nodes -a "systemctl is-active alloy"
+```
+
+```bash
+ansible monitoring_nodes -a "systemctl is-enabled alloy"
 ```
 
 ## Access
@@ -260,19 +451,96 @@ docker compose ps
 | Alertmanager | 9093 |
 | Loki | 3100 |
 | Node Exporter | 9100 |
+| Alloy HTTP API | 12345 |
 
 ## Security
 
-The Discord webhook is stored in `.env` and excluded from version control.
+The Discord webhook is kept outside version control.
 
-The Alertmanager configuration template contains only the environment variable placeholder.
+The Alertmanager configuration uses an environment variable rather than storing the webhook directly in the repository.
 
-The generated `alertmanager.yml` containing the substituted webhook is also excluded from version control.
+Generated configuration containing the webhook is excluded from Git.
 
-Secrets are therefore not stored in the Git repository.
+This keeps notification credentials out of the repository.
+
+## What I Learned
+
+This project was built as a practical Linux and infrastructure engineering lab.
+
+Key areas explored include:
+
+- Linux system administration
+- Ubuntu Server
+- Rocky Linux
+- CentOS
+- systemd
+- systemd journal
+- journald persistence
+- Prometheus
+- Node Exporter
+- Grafana
+- Loki
+- Grafana Alloy
+- LogQL
+- Prometheus alert rules
+- Alertmanager
+- Discord notifications
+- Docker Compose
+- Ansible inventory
+- Ansible variables
+- Ansible templates
+- Ansible systemd management
+- Idempotent configuration management
+- Multi-node monitoring
+- Centralized logging
+- Infrastructure alerting
+
+## Screenshots
+
+### Grafana Infrastructure Dashboard
+
+Overview of infrastructure metrics collected from the monitored Linux systems.
+
+### Centralized Logs
+
+System logs from the monitored Linux servers centralized in Loki and visualized through Grafana.
+
+### Prometheus Targets
+
+Prometheus showing the monitored Linux systems and their scrape status.
+
+### Prometheus Alert
+
+Prometheus detecting an infrastructure condition and transitioning the alert through its evaluation states.
+
+### Alertmanager Notification
+
+Alertmanager receiving and processing a firing infrastructure alert.
+
+### Discord Alert
+
+Alertmanager delivering the infrastructure alert to Discord.
+
+## Future Work
+
+This project focuses on building and operating the observability stack itself.
+
+The next infrastructure project will be developed separately and will focus on using Terraform and Ansible to provision and configure Linux infrastructure from the ground up.
+
+The next project will deliberately avoid depending on Docker for the underlying Linux systems and will focus more deeply on:
+
+- Terraform
+- Ansible
+- Linux system provisioning
+- Network configuration
+- System configuration
+- Service management
+- Infrastructure automation
+- Configuration management
+- Infrastructure as Code
 
 ## Author
 
-**OB Adams**
+OB Adams
 
 Linux, Cloud, DevOps, and Infrastructure Automation
