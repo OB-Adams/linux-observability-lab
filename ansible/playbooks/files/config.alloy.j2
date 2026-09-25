@@ -1,0 +1,22 @@
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+loki.source.journal "journal" {
+  path    = "/var/log/journal"
+  max_age = "12h"
+
+  labels = {
+    job  = "journal",
+    host = "{{ inventory_hostname }}",
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://192.168.0.30:3100/loki/api/v1/push"
+  }
+}
