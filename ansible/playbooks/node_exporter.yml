@@ -1,9 +1,0 @@
-- name: Manage Node Exporter
-  hosts: monitoring_nodes
-  
-  tasks:
-    - name: Ensure Node Exporter is enabled and running
-      ansible.builtin.systemd_service:
-        name: prometheus-node-exporter
-        enabled: true
-        state: started
