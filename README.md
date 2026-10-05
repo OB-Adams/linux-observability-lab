@@ -219,10 +219,7 @@ Alerts move through **inactive → pending → firing**, so brief spikes never r
 | ------- | ------ |
 | ![Instance pending](docs/screenshots/prom-instance-pending.png) | ![Instance firing](docs/screenshots/prom-instance-firing.png) |
 
-| Alertmanager | Discord |
-| ------------ | ------- |
-| ![Alertmanager](docs/screenshots/alertmanger-notification.png) | ![Discord](docs/screenshots/discord-alertmanager-notification.png) |
-
+![Discord](docs/screenshots/discord-alertmanager-notification.png)
 ![CPU alert pending](docs/screenshots/prom-cpu-pending.png)
 
 ---
