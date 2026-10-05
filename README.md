@@ -4,7 +4,7 @@ A multi-host observability stack for Linux servers: **metrics** with Prometheus 
 
 The lab monitors a mixed fleet (Ubuntu, Rocky Linux, CentOS) from one central host, and was built to practise the monitor → detect → notify → investigate workflow used in Linux operations and cloud support roles.
 
-![Grafana Infrastructure Dashboard](docs/screenshots/centralised%20dashboard.png)
+![Grafana Infrastructure Dashboard](docs/screenshots/infrastructure-dashboard.png)
 
 ---
 
