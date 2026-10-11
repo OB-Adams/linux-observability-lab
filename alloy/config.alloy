@@ -9,7 +9,7 @@ loki.source.journal "journal" {
 
   labels = {
     job  = "journal",
-    host = "observabiltiy",
+    host = "observability",
   }
 
   forward_to = [loki.write.default.receiver]
